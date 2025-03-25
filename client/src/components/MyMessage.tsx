@@ -1,10 +1,13 @@
+interface messageProps {
+  message: string
+}
 
-export default function MyMessage() {
+export default function MyMessage(props: messageProps) {
   return (
     <>
       <div className="inline-flex max-w-[65%] self-end">
-        <span className="bg-slate-900 text-white rounded-xl px-3 py-2">
-          <span>My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message My message</span>
+        <span className="bg-white text-black rounded-md px-4 py-2">
+          <span>{ props.message }</span>
         </span>
       </div>
     </>

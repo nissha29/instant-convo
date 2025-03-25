@@ -1,9 +1,13 @@
-export default function ReceivedMessage() {
+interface messageProps {
+  message: string
+}
+
+export default function ReceivedMessage(props: messageProps) {
     return (
       <>
         <div className="inline-flex max-w-[65%] self-start">
-          <span className="bg-gray-200 text-black rounded-xl px-3 py-2">
-            <span>Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message Received message</span>
+          <span className="bg-white text-black rounded-md px-4 py-2">
+            <span>{ props.message }</span>
           </span>
         </div>
       </>
