@@ -2,32 +2,52 @@ import { useRef } from "react";
 import { useSetRecoilState } from "recoil";
 import { connectionStatus } from "../store/atoms";
 
-export function createConnection(){
-    const wsRef = useRef<WebSocket | null>(null);
-    const setIsConnected = useSetRecoilState(connectionStatus);
+export function useWebSocket() {
+  const wsRef = useRef<WebSocket | null>(null);
+  const setIsConnected = useSetRecoilState(connectionStatus);
 
-    function connect(){
-        if(! wsRef || wsRef.current?.readyState === WebSocket.CLOSED){
-            const ws = new WebSocket(`ws://localhost:8080`);
+  function connect() {
+    if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+      const ws = new WebSocket(`ws://localhost:8080`);
 
-            ws.onopen = () => {
-                setIsConnected(true);
-            }
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        setIsConnected(true);
+      };
 
-            ws.onclose = () => {
-                setIsConnected(false);
-            }
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        setIsConnected(false);
+      };
 
-            ws.onerror = () => {
-                console.log(`ws error`);
-            }
+      ws.onerror = (error) => {
+        console.error(`WebSocket error:`, error);
+      };
 
-            wsRef.current = ws;
-        }
-        return wsRef.current;
+      ws.onmessage = (event) => {
+        console.log("Received message:", event.data);
+        // Handle incoming messages here
+      };
+
+      wsRef.current = ws;
     }
+    return wsRef.current;
+  }
 
-    return {
-        connect,
-    }
+  function sendMessage(type: string, payload: any) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const message = JSON.stringify({ type, payload });
+      wsRef.current.send(message);
+      console.log("Sent message:", message);
+      return true;
+    } 
+    console.log("Failed to send message - connection not open");
+    return false;
+  }
+
+  return {
+    connect,
+    sendMessage,
+    socket: wsRef
+  };
 }

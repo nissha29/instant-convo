@@ -34,5 +34,4 @@ export const usernameState = atom({
 export const roomIdState = atom({
     key: 'roomId',
     default: '',
-    effects_UNSTABLE: [persistAtom],
 })

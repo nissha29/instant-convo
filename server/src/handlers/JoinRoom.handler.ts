@@ -1,5 +1,5 @@
 import { WebSocket } from "ws"
-import { clientRooms } from "../state/state";
+import { clientRooms, socketToUser } from "../state/state";
 
 interface JoinRoomPayload {
     username: string,
@@ -29,6 +29,7 @@ export function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayload) {
     }
 
     if (clientRooms.has(roomId)) {
+        socketToUser.set(socket, username);
         clientRooms.get(roomId)?.push(socket);
         console.log(`User has joined room, ${roomId}`);
         socket.send(JSON.stringify({

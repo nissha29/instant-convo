@@ -1,9 +1,11 @@
 import { copyRoomCode } from "../utils/CopyRoomCode";
-// import { generateRoomCode } from "../utils/generateRoomCode";
+import { generateRoomCode } from "../utils/generateRoomCode";
 import { Refresh, Copy, Loader } from "../icons/icons";
 import { useRef } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { joinedStatus, messagesState, roomCreationStatus, roomIdState, usernameState } from "../store/atoms";
+import { useWebSocket } from "../utils/CreateConnection";
+import toast from "react-hot-toast";
 // import { FormDataProps } from "../types/FormDataProps";
 
 export default function JoinRoom() {
@@ -14,13 +16,31 @@ export default function JoinRoom() {
     const setUsername = useSetRecoilState(usernameState);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
+    const { connect, sendMessage } = useWebSocket();
 
     function createNewRoom() {
         setIsRoomCreated(true);
+        const ws = connect();
+
+        const roomCode = generateRoomCode();
+        setRoomId(roomCode);
+        const type = 'create_room';
+        const payload = {
+            roomId: roomCode,
+        }
+
+        if (ws.readyState === WebSocket.OPEN) {
+            sendMessage(type, payload);
+        } else {
+            ws.addEventListener('open', () => {
+                sendMessage(type, payload);
+            });
+        }
+        setIsRoomCreated(false);
     }
 
     function joinRoom() {
-        
+
     }
 
     return (
@@ -32,7 +52,7 @@ export default function JoinRoom() {
                     onClick={createNewRoom}
                     className="hover:bg-white bg-white/90 rounded-xl text-black w-full p-3 mb-4 flex items-center justify-center gap-2 transition-colors"
                 >
-                    {! isRoomCreated
+                    {!isRoomCreated
                         ?
                         <div className="flex gap-2">
                             <Refresh />
@@ -49,7 +69,14 @@ export default function JoinRoom() {
                     <div className="bg-white/20 rounded-lg p-4 mb-4 flex justify-between items-center">
                         <span className="text-lg sm:text-xl font-mono tracking-wider">{roomId}</span>
                         <button
-                            onClick={() => copyRoomCode(roomId)}
+                            onClick={async() => {
+                                const success = await copyRoomCode(roomId);
+                                if (success) {
+                                    toast.success("Room code copied!");
+                                } else {
+                                    toast.error("Failed to copy room code");
+                                }
+                            }}
                             className="text-gray-400 hover:text-white transition-colors"
                             title="Copy Room Code"
                         >

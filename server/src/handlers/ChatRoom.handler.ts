@@ -24,7 +24,7 @@ export function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayload) {
         socket.send(JSON.stringify({
             type: 'error',
             success: false,
-            message: 'You need to join a room with a username first'
+            message: 'You need to join a room with a username first',
         }));
         return;
     }
