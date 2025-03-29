@@ -1,70 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import MyMessage from "./components/MyMessage";
 // import ReceivedMessage from "./components/ReceivedMessage";
-import Copy from "./icons/Copy";
-import Exit from "./icons/Exit";
-import Message from "./icons/Message";
-import Send from "./icons/Send";
+import { joinedStatus,messagesState, roomIdState } from "./store/atoms";
+import { Message, Copy, Exit, Send } from "./icons/icons";
 import JoinRoom from "./components/JoinRoom";
-
-interface formDataProps {
-  type: string,
-  payload: {
-    message?: string,
-    roomId?: string,
-    username?: string,
-  }
-}
+import { FormDataProps } from "./types/FormDataProps";
+import { useRecoilValue } from "recoil";
 
 function App() {
-  const [isJoined, setIsJoined] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
-  const [username, setUsername] = useState<string>('');
-  const [roomId, setRoomId] = useState<string>('');
-  const [generatedRoomCode, setGeneratedRoomCode] = useState<string | null>(null);
+  const isJoined = useRecoilValue(joinedStatus);
+  const messages = useRecoilValue(messagesState);
+  // const username = useRecoilValue(usernameState);
+  const roomId = useRecoilValue(roomIdState);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<formDataProps>({
-    'type': '',
-    'payload': {}
-  })
-
-  const wsRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    if (isJoined) {
-      const ws = new WebSocket(`ws://localhost:8080`);
-      ws.onmessage = (event) => {
-        setMessages(m => [...m, event.data]);
-      };
-
-      wsRef.current = ws;
-
-      return () => {
-        ws.close();
-      }
-    }
-  }, [])
+  // const [formData, setFormData] = useState<FormDataProps>({
+  //   'type': '',
+  //   'payload': {}
+  // });
 
   function sendMessage() {
-    const message = inputRef.current?.value ?? '';
-
-    if (message.trim()) {
-      setFormData({
-        type: 'chat',
-        payload: {
-          message: message
-        }
-      })
-    }
-
-    wsRef.current?.send(JSON.stringify(formData));
   }
 
 
   if (!isJoined) {
     return (
-      <JoinRoom generatedRoomCode={generatedRoomCode} setGeneratedRoomCode={setGeneratedRoomCode} setIsJoined={setIsJoined} setUsername={setUsername} setRoomId={setRoomId}/>
-    );
+      <JoinRoom /> 
+    )
   }
 
   return (
@@ -80,12 +41,12 @@ function App() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm sm:text-lg font-semibold text-gray-300">Room Code:</span>
-                <span className="text-sm sm:text-lg font-medium text-white tracking-wider">ABC123</span>
+                <span className="text-sm sm:text-lg font-medium text-white tracking-wider">{roomId}</span>
                 <Copy />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm sm:text-lg text-gray-300 font-semibold">Users:</span>
-                <span className="text-sm sm:text-lg font-medium text-white">3/10</span>
+                <span className="text-sm sm:text-lg font-medium text-white">{}</span>
               </div>
             </div>
             <button className="flex items-center gap-2 text-white px-3 py-2 rounded-lg transition-colors duration-300 ease-in-out hover:cursor-pointer hover:text-red-500">

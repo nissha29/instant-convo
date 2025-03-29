@@ -1,41 +1,33 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = require("ws");
+const JoinRoom_handler_1 = require("./handlers/JoinRoom.handler");
+const ChatRoom_handler_1 = require("./handlers/ChatRoom.handler");
+const messageHandlers = {
+    'join': JoinRoom_handler_1.JoinRoomHandler,
+    'chat': ChatRoom_handler_1.ChatRoomHandler,
+};
 const wss = new ws_1.WebSocketServer({ port: 8080 });
 const clientRooms = new Map();
 wss.on('connection', (socket) => {
     console.log(`User connected`);
     socket.on('message', (message) => {
-        var _a, _b;
-        const parsedMessage = JSON.parse(message.toString());
-        if (parsedMessage.type == 'join') {
-            const roomId = parsedMessage.payload.roomId;
-            if (clientRooms.has(roomId)) {
-                (_a = clientRooms.get(roomId)) === null || _a === void 0 ? void 0 : _a.push(socket);
+        try {
+            const parsedMessage = JSON.parse(message.toString());
+            const handler = messageHandlers[parsedMessage.type];
+            if (handler) {
+                handler(socket, parsedMessage.payload);
             }
             else {
-                clientRooms.set(roomId, [socket]);
+                console.log(`Unknown message type: ${parsedMessage.type}`);
             }
         }
-        else if (parsedMessage.type == 'chat') {
-            {
-                let currentUserRoom = null;
-                clientRooms.forEach((sockets, roomId) => {
-                    if (sockets.includes(socket)) {
-                        currentUserRoom = roomId;
-                    }
-                });
-                if (currentUserRoom) {
-                    const receivedMessage = (_b = parsedMessage === null || parsedMessage === void 0 ? void 0 : parsedMessage.payload) === null || _b === void 0 ? void 0 : _b.message;
-                    const socketsInCurrentRoom = clientRooms.get(currentUserRoom);
-                    socketsInCurrentRoom === null || socketsInCurrentRoom === void 0 ? void 0 : socketsInCurrentRoom.forEach((client) => {
-                        client.send(receivedMessage);
-                    });
-                }
-                else {
-                    console.log(`${currentUserRoom} Room does not exist`);
-                }
-            }
+        catch (error) {
+            console.error('Error processing message:', error);
         }
+    });
+    socket.on('close', () => {
+        //   removeSocketFromAllRooms(socket);
+        console.log('User disconnected');
     });
 });

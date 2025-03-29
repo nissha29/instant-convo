@@ -1,43 +1,46 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { JoinRoomHandler } from './handlers/JoinRoom.handler'
+import { ChatRoomHandler } from './handlers/ChatRoom.handler';
+import { CreateRoom } from './handlers/CreateRoom.handler';
+import { Disconnect } from './handlers/disconnect.handler';
+
+interface Message {
+    type: string,
+    payload: any,
+}
+
+type MessageType = 'join' | 'chat' | 'create_room';
+
+
+const messageHandlers: Record<MessageType, (socket: WebSocket, payload: any) => void> = {
+    'join': JoinRoomHandler,
+    'chat': ChatRoomHandler,
+    'create_room': CreateRoom,
+};
+
 
 const wss = new WebSocketServer({ port: 8080 });
 
-const clientRooms = new Map<string, WebSocket[]>();
-
-wss.on('connection', (socket) =>{
+wss.on('connection', (socket) => {
     console.log(`User connected`);
-
+    
     socket.on('message', (message) => {
-        const parsedMessage = JSON.parse(message.toString());
-
-        if(parsedMessage.type == 'join'){
-            const roomId = parsedMessage.payload.roomId;
-            if(clientRooms.has(roomId)){
-                clientRooms.get(roomId)?.push(socket);
-            }
-            else{
-                clientRooms.set(roomId, [socket]);
-            }
+      try {
+        const parsedMessage = JSON.parse(message.toString()) as Message;
+        const handler = messageHandlers[parsedMessage.type as MessageType];
+        
+        if (handler) {
+          handler(socket, parsedMessage.payload);
+        } else {
+          console.log(`Unknown message type: ${parsedMessage.type}`);
         }
-        else if(parsedMessage.type == 'chat'){{
-            let currentUserRoom: string | null = null;
-            clientRooms.forEach((sockets, roomId) => {
-                if(sockets.includes(socket)){
-                    currentUserRoom = roomId;
-                }
-            })
-
-            if(currentUserRoom){
-                const receivedMessage = parsedMessage?.payload?.message;
-                const socketsInCurrentRoom = clientRooms.get(currentUserRoom);
-
-                socketsInCurrentRoom?.forEach((client) => {
-                    client.send(receivedMessage);
-                })
-            }
-            else{
-                console.log(`${currentUserRoom} Room does not exist`)
-            }
-        }}
-    })
-})
+      } catch (error) {
+        console.error('Error processing message:', error);
+      }
+    });
+    
+    socket.on('close', () => {
+      Disconnect(socket);
+      console.log('User disconnected');
+    });
+  });

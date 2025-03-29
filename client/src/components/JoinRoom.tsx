@@ -1,56 +1,55 @@
 import { copyRoomCode } from "../utils/CopyRoomCode";
-import { generateRoomCode } from "../utils/generateRoomCode";
-import Refresh from "../icons/Refresh";
-import Copy from "../icons/Copy";
+// import { generateRoomCode } from "../utils/generateRoomCode";
+import { Refresh, Copy, Loader } from "../icons/icons";
 import { useRef } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { joinedStatus, messagesState, roomCreationStatus, roomIdState, usernameState } from "../store/atoms";
+// import { FormDataProps } from "../types/FormDataProps";
 
-interface JoinRoomProps {
-    generatedRoomCode: string | null;
-    setGeneratedRoomCode: React.Dispatch<React.SetStateAction<string | null>>;
-    setIsJoined: React.Dispatch<React.SetStateAction<boolean>>;
-    setUsername: React.Dispatch<React.SetStateAction<string>>;
-    setRoomId: React.Dispatch<React.SetStateAction<string>>;
-
-}
-
-export default function JoinRoom({ generatedRoomCode, setGeneratedRoomCode, setIsJoined, setUsername, setRoomId }: JoinRoomProps) {
-
+export default function JoinRoom() {
+    const [roomId, setRoomId] = useRecoilState(roomIdState);
+    const setMessages = useSetRecoilState(messagesState);
+    const [isJoined, setIsJoined] = useRecoilState(joinedStatus);
+    const [isRoomCreated, setIsRoomCreated] = useRecoilState(roomCreationStatus);
+    const setUsername = useSetRecoilState(usernameState);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
 
-    function generateCode() {
-        setGeneratedRoomCode(() => generateRoomCode());
+    function createNewRoom() {
+        setIsRoomCreated(true);
     }
 
-    function handleJoin() {
-        const enteredUsername = usernameRef.current?.value ?? '';
-        const enteredRoomId = roomIdRef.current?.value ?? '';
-    
-        if (enteredUsername.trim() && enteredRoomId.trim()) {
-          setUsername(enteredUsername);
-          setRoomId(enteredRoomId);
-          setIsJoined(true);
-        }
+    function joinRoom() {
+        
     }
-    
+
     return (
         <div className='flex flex-col h-screen w-full bg-black text-white items-center justify-center font-mono px-4'>
             <div className="border border-gray-700 rounded-lg py-8 shadow-2xl w-full max-w-md px-6 tracking-wider">
                 <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Join Instant Chat</h2>
 
                 <button
-                    onClick={generateCode}
+                    onClick={createNewRoom}
                     className="hover:bg-white bg-white/90 rounded-xl text-black w-full p-3 mb-4 flex items-center justify-center gap-2 transition-colors"
                 >
-                    <Refresh />
-                    Create New Room
+                    {! isRoomCreated
+                        ?
+                        <div className="flex gap-2">
+                            <Refresh />
+                            Create New Room
+                        </div>
+                        :
+                        <div className="animate-spin">
+                            <Loader />
+                        </div>
+                    }
                 </button>
 
-                {generatedRoomCode && (
+                {roomId && (
                     <div className="bg-white/20 rounded-lg p-4 mb-4 flex justify-between items-center">
-                        <span className="text-lg sm:text-xl font-mono tracking-wider">{generatedRoomCode}</span>
+                        <span className="text-lg sm:text-xl font-mono tracking-wider">{roomId}</span>
                         <button
-                            onClick={() => copyRoomCode(generatedRoomCode)}
+                            onClick={() => copyRoomCode(roomId)}
                             className="text-gray-400 hover:text-white transition-colors"
                             title="Copy Room Code"
                         >
@@ -79,10 +78,17 @@ export default function JoinRoom({ generatedRoomCode, setGeneratedRoomCode, setI
                             className="w-full sm:flex-grow p-3 rounded-lg bg-transparent text-white border border-gray-600"
                         />
                         <button
-                            onClick={handleJoin}
+                            onClick={joinRoom}
                             className="w-full sm:w-auto bg-white/90 text-black text-base sm:text-lg px-4 sm:px-7 py-3 rounded-xl hover:bg-white transition-colors font-medium whitespace-nowrap"
                         >
-                            Join Room
+                            {isJoined
+                                ?
+                                <div className="animate-spin">
+                                    <Loader />
+                                </div>
+                                :
+                                'Join Room'
+                            }
                         </button>
                     </div>
                 </div>
