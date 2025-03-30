@@ -1,52 +1,45 @@
 import { WebSocket } from "ws";
-import { clientRooms, socketToUser } from "../state/state";
+import { getRoomSockets, getSocketRoom, getSocketUser, socketMap } from "../state/state";
+import { sendContent, sendError } from "../utils/SendResponse";
+import findSocketId from "../utils/findSocketId";
 
 interface ChatRoomPayload {
     username: string,
     message: string,
 }
 
-function findCurrentSocketRoom(socket: WebSocket) {
-    for (const [roomId, sockets] of clientRooms.entries()) {
-        if (sockets.includes(socket)) {
-            return roomId;
-        }
-    }
-    return null;
-}
-
-export function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayload) {
+export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayload) {
     const { message } = payload;
 
-    const username = socketToUser.get(socket);
-  
-    if (!username) {
-        socket.send(JSON.stringify({
-            type: 'error',
-            success: false,
-            message: 'You need to join a room with a username first',
-        }));
-        return;
+    try {
+        const socketId = findSocketId(socket);
+
+        if (!socketId) {
+            return sendError(socket, 'Socket Not Found');
+        }
+
+        const username = await getSocketUser(socketId);
+
+        if (!username) {
+            return sendError(socket, 'User Not Found');
+        }
+
+        const currentUserRoom = await getSocketRoom(socketId);
+
+        if (!currentUserRoom) {
+            return sendError(socket, 'You are not in any room');
+        }
+
+        const socketsInCurrentRoom = await getRoomSockets(currentUserRoom);
+
+        socketsInCurrentRoom?.forEach((socketId) => {
+            const clientSocket = socketMap.get(socketId);
+            if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
+                sendContent(clientSocket, 'chat', { username, message });
+            }
+        });
+    } catch (error) {
+        console.error('Redis error:', error);
+        return sendError(socket, 'Server Error occured');
     }
-
-    const currentUserRoom = findCurrentSocketRoom(socket);
-
-    if (!currentUserRoom) {
-        socket.send(JSON.stringify({
-            type: 'error',
-            success: false,
-            message: 'You are not in any room'
-        }));
-        return;
-    }
-
-    const socketsInCurrentRoom = clientRooms.get(currentUserRoom);
-
-    socketsInCurrentRoom?.forEach((client) => {
-        client.send(JSON.stringify({
-            type: 'chat',
-            username,
-            message
-        }));
-    });
 }

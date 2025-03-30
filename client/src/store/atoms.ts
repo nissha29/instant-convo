@@ -11,7 +11,6 @@ export const connectionStatus = atom({
 export const joinedStatus = atom({
     key: 'joinedStatus',
     default: false,
-    effects_UNSTABLE: [persistAtom],
 })
 
 export const roomCreationStatus = atom({

@@ -2,25 +2,29 @@ import { copyRoomCode } from "../utils/CopyRoomCode";
 import { generateRoomCode } from "../utils/generateRoomCode";
 import { Refresh, Copy, Loader } from "../icons/icons";
 import { useRef } from "react";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { joinedStatus, messagesState, roomCreationStatus, roomIdState, usernameState } from "../store/atoms";
+import { useRecoilState } from "recoil";
+import { connectionStatus, joinedStatus, roomCreationStatus, roomIdState } from "../store/atoms";
 import { useWebSocket } from "../utils/CreateConnection";
 import toast from "react-hot-toast";
 // import { FormDataProps } from "../types/FormDataProps";
 
 export default function JoinRoom() {
+    const [connection, setConnection] = useRecoilState(connectionStatus);
     const [roomId, setRoomId] = useRecoilState(roomIdState);
-    const setMessages = useSetRecoilState(messagesState);
     const [isJoined, setIsJoined] = useRecoilState(joinedStatus);
     const [isRoomCreated, setIsRoomCreated] = useRecoilState(roomCreationStatus);
-    const setUsername = useSetRecoilState(usernameState);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
     const { connect, sendMessage } = useWebSocket();
 
     function createNewRoom() {
         setIsRoomCreated(true);
-        const ws = connect();
+
+        let ws = null;
+        if(! connection){
+            ws = connect();
+            setConnection(true);
+        }
 
         const roomCode = generateRoomCode();
         setRoomId(roomCode);
@@ -29,10 +33,10 @@ export default function JoinRoom() {
             roomId: roomCode,
         }
 
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ws?.readyState === WebSocket.OPEN) {
             sendMessage(type, payload);
         } else {
-            ws.addEventListener('open', () => {
+            ws?.addEventListener('open', () => {
                 sendMessage(type, payload);
             });
         }
@@ -40,7 +44,46 @@ export default function JoinRoom() {
     }
 
     function joinRoom() {
+        const enteredUsername = usernameRef.current?.value;
+        const enteredRoomCode = roomIdRef.current?.value;
 
+        if (!enteredUsername) {
+            toast.error("Username is required");
+            return;
+        }
+
+        if(!enteredRoomCode){
+            toast.error("Room Code is required");
+            return;
+        }
+
+        const type = 'join';
+        const payload = {
+            username: enteredUsername,
+            roomId: enteredRoomCode,
+        }
+
+        let ws = null;
+        if(! connection){
+            ws = connect();
+            setConnection(true);
+        }
+
+        if (ws?.readyState === WebSocket.OPEN) {
+            const messageSent = sendMessage(type, payload);
+            console.log("Message sent directly:", messageSent);
+            if (messageSent) {
+                setIsJoined(true);
+            }
+        } else {
+            ws?.addEventListener('open', () => {
+                const success = sendMessage(type, payload);
+                console.log("Message sent from event listener:", success);
+                if (success) {
+                    setIsJoined(true);
+                }
+            });
+        }
     }
 
     return (
@@ -69,7 +112,7 @@ export default function JoinRoom() {
                     <div className="bg-white/20 rounded-lg p-4 mb-4 flex justify-between items-center">
                         <span className="text-lg sm:text-xl font-mono tracking-wider">{roomId}</span>
                         <button
-                            onClick={async() => {
+                            onClick={async () => {
                                 const success = await copyRoomCode(roomId);
                                 if (success) {
                                     toast.success("Room code copied!");
@@ -96,7 +139,7 @@ export default function JoinRoom() {
                 </div>
 
                 <div className="mb-3">
-                    <label className="block text-gray-300 mb-2">Room ID</label>
+                    <label className="block text-gray-300 mb-2">Room Code</label>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
                         <input
                             ref={roomIdRef}
@@ -105,7 +148,7 @@ export default function JoinRoom() {
                             className="w-full sm:flex-grow p-3 rounded-lg bg-transparent text-white border border-gray-600"
                         />
                         <button
-                            onClick={joinRoom}
+                            onClick={() => joinRoom()}
                             className="w-full sm:w-auto bg-white/90 text-black text-base sm:text-lg px-4 sm:px-7 py-3 rounded-xl hover:bg-white transition-colors font-medium whitespace-nowrap"
                         >
                             {isJoined

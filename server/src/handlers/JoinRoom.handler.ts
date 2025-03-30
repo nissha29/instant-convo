@@ -1,48 +1,49 @@
 import { WebSocket } from "ws"
-import { clientRooms, socketToUser } from "../state/state";
+import { isRoomInRedis, addSocketToRoom, setSocketRoom, socketMap, setSocketUser } from "../state/state";
+import { sendContent, sendError } from "../utils/SendResponse";
+import { v4 as uuidv4 } from 'uuid';
 
 interface JoinRoomPayload {
     username: string,
     roomId: string,
 }
 
-function sendError(socket: WebSocket, message: string) {
-    socket.send(JSON.stringify({
-        type: 'error',
-        message,
-        success: false
-    }));
-    return null;
-}
-
-export function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayload) {
+export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayload) {
     const { username, roomId } = payload;
 
     if(!username){
-        sendError(socket, `Username can't be empty`);
-        return;
+        return sendError(socket, `Username can't be empty`);
     }
 
     if (!roomId) {
-        sendError(socket, `Room id can't be empty`);
-        return;
+        return sendError(socket, `Room id can't be empty`);
     }
 
-    if (clientRooms.has(roomId)) {
-        socketToUser.set(socket, username);
-        clientRooms.get(roomId)?.push(socket);
-        console.log(`User has joined room, ${roomId}`);
-        socket.send(JSON.stringify({
-            type: 'room_joined',
-            roomId: payload.roomId,
-            success: true
-        }));
-    }
-    else{
-        socket.send(JSON.stringify({
-            type: `error`,
-            message: `Room Not Found`,
-            success: false
-        }));
+    try{
+        const roomExists = await isRoomInRedis(roomId);
+        if(! roomExists){
+            return sendError(socket, 'Room Not Found');
+        }
+
+        let socketId: string;
+
+        if((socket as any).socketId){
+            socketId = (socket as any).socketId;
+        }
+        else{
+            socketId = uuidv4();
+       
+            socketMap.set(socketId, socket);
+            (socket as any).socketId = socketId;
+        }
+
+        await addSocketToRoom(roomId, socketId);
+        await setSocketUser(socketId, username);
+        await setSocketRoom(socketId, roomId);
+
+        return sendContent(socket, 'room_joined', { username: username, roomId: roomId });
+    } catch (error) {
+        console.error('Redis error:', error);
+        return sendError(socket, 'Server Error occured');
     }
 }
