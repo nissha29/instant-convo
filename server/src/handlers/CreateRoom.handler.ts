@@ -14,7 +14,7 @@ export async function CreateRoom(socket: WebSocket, payload: CreateRoomPayload) 
         const roomExists = await isRoomInRedis(roomId);
 
         if (roomExists) {
-            return sendError(socket, 'Room already exists');
+            return sendError(socket, { message: 'Room already exists' });
         }
         else {
             const socketId = uuidv4();
@@ -28,6 +28,6 @@ export async function CreateRoom(socket: WebSocket, payload: CreateRoomPayload) 
         }
     } catch (error) {
         console.error('Redis error:', error);
-        return sendError(socket, 'Server Error Occured');
+        return sendError(socket, { message: 'Server Error Occured' });
     }
 }

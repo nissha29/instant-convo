@@ -2,16 +2,15 @@ import { copyRoomCode } from "../utils/CopyRoomCode";
 import { generateRoomCode } from "../utils/generateRoomCode";
 import { Refresh, Copy, Loader } from "../icons/icons";
 import { useRef } from "react";
-import { useRecoilState } from "recoil";
-import { connectionStatus, joinedStatus, roomCreationStatus, roomIdState } from "../store/atoms";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { joinedStatus, roomCreationStatus, roomIdState } from "../store/atoms";
 import { useWebSocket } from "../utils/CreateConnection";
 import toast from "react-hot-toast";
 // import { FormDataProps } from "../types/FormDataProps";
 
 export default function JoinRoom() {
-    const [connection, setConnection] = useRecoilState(connectionStatus);
     const [roomId, setRoomId] = useRecoilState(roomIdState);
-    const [isJoined, setIsJoined] = useRecoilState(joinedStatus);
+    const isJoined = useRecoilValue(joinedStatus);
     const [isRoomCreated, setIsRoomCreated] = useRecoilState(roomCreationStatus);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
@@ -20,11 +19,7 @@ export default function JoinRoom() {
     function createNewRoom() {
         setIsRoomCreated(true);
 
-        let ws = null;
-        if(! connection){
-            ws = connect();
-            setConnection(true);
-        }
+        let ws = connect();
 
         const roomCode = generateRoomCode();
         setRoomId(roomCode);
@@ -45,7 +40,7 @@ export default function JoinRoom() {
 
     function joinRoom() {
         const enteredUsername = usernameRef.current?.value;
-        const enteredRoomCode = roomIdRef.current?.value;
+        const enteredRoomCode = roomIdRef.current?.value
 
         if (!enteredUsername) {
             toast.error("Username is required");
@@ -57,31 +52,19 @@ export default function JoinRoom() {
             return;
         }
 
-        const type = 'join';
+        const type = 'join_room';
         const payload = {
             username: enteredUsername,
             roomId: enteredRoomCode,
         }
 
-        let ws = null;
-        if(! connection){
-            ws = connect();
-            setConnection(true);
-        }
+        let ws = connect();
 
         if (ws?.readyState === WebSocket.OPEN) {
-            const messageSent = sendMessage(type, payload);
-            console.log("Message sent directly:", messageSent);
-            if (messageSent) {
-                setIsJoined(true);
-            }
+            sendMessage(type, payload);
         } else {
             ws?.addEventListener('open', () => {
-                const success = sendMessage(type, payload);
-                console.log("Message sent from event listener:", success);
-                if (success) {
-                    setIsJoined(true);
-                }
+                sendMessage(type, payload);
             });
         }
     }

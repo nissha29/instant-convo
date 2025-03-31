@@ -9,11 +9,11 @@ export function sendContent(socket: WebSocket, type: string, payload: Object) {
     return true;
 }
 
-export function sendError(socket: WebSocket, message: string) {
+export function sendError(socket: WebSocket, payload: Object) {
     socket.send(JSON.stringify({
         type: 'error',
         success: false,
-        message: message,
+        payload: payload,
     }));
     return false;
 }

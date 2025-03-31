@@ -9,7 +9,14 @@ createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RecoilRoot>
       <App />
-      <Toaster position="bottom-right" />
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          border: "1px solid #505050",
+          background: "#000000",
+          color: "#ffffff",
+        },
+      }}
+      />
     </RecoilRoot>
   </React.StrictMode>
 )

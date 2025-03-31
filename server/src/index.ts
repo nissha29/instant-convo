@@ -12,11 +12,11 @@ interface Message {
     payload: any,
 }
 
-type MessageType = 'join' | 'chat' | 'create_room';
+type MessageType = 'join_room' | 'chat' | 'create_room';
 
 
 const messageHandlers: Record<MessageType, (socket: WebSocket, payload: any) => void> = {
-    'join': JoinRoomHandler,
+    'join_room': JoinRoomHandler,
     'chat': ChatRoomHandler,
     'create_room': CreateRoom,
 };

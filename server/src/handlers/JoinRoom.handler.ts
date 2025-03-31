@@ -1,5 +1,5 @@
 import { WebSocket } from "ws"
-import { isRoomInRedis, addSocketToRoom, setSocketRoom, socketMap, setSocketUser } from "../state/state";
+import { isRoomInRedis, addSocketToRoom, setSocketRoom, socketMap, setSocketUser, getUserCountInRoom, getRoomSockets } from "../state/state";
 import { sendContent, sendError } from "../utils/SendResponse";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,17 +12,17 @@ export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayloa
     const { username, roomId } = payload;
 
     if(!username){
-        return sendError(socket, `Username can't be empty`);
+        return sendError(socket, { message: `Username can't be empty` });
     }
 
     if (!roomId) {
-        return sendError(socket, `Room id can't be empty`);
+        return sendError(socket, { message: `Room id can't be empty` });
     }
 
     try{
         const roomExists = await isRoomInRedis(roomId);
         if(! roomExists){
-            return sendError(socket, 'Room Not Found');
+            return sendError(socket, { message: 'Room Not Found' });
         }
 
         let socketId: string;
@@ -41,9 +41,19 @@ export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayloa
         await setSocketUser(socketId, username);
         await setSocketRoom(socketId, roomId);
 
+        const socketsInRoom = await getRoomSockets(roomId);
+        const socketsCount = await getUserCountInRoom(roomId);
+
+        socketsInRoom.forEach((socketId) => {
+            const clientSocket = socketMap.get(socketId);
+            if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
+              sendContent(clientSocket, 'roomUserCount', { count: socketsCount });
+            }
+        })
+
         return sendContent(socket, 'room_joined', { username: username, roomId: roomId });
     } catch (error) {
         console.error('Redis error:', error);
-        return sendError(socket, 'Server Error occured');
+        return sendError(socket, { message: 'Server Error occured' });
     }
 }

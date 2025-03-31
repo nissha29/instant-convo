@@ -15,19 +15,19 @@ export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayloa
         const socketId = findSocketId(socket);
 
         if (!socketId) {
-            return sendError(socket, 'Socket Not Found');
+            return sendError(socket, { message: 'Socket Not Found'} );
         }
 
         const username = await getSocketUser(socketId);
 
         if (!username) {
-            return sendError(socket, 'User Not Found');
+            return sendError(socket, { message: 'User Not Found' });
         }
 
         const currentUserRoom = await getSocketRoom(socketId);
 
         if (!currentUserRoom) {
-            return sendError(socket, 'You are not in any room');
+            return sendError(socket, { message: 'You are not in any room' });
         }
 
         const socketsInCurrentRoom = await getRoomSockets(currentUserRoom);
@@ -40,6 +40,6 @@ export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayloa
         });
     } catch (error) {
         console.error('Redis error:', error);
-        return sendError(socket, 'Server Error occured');
+        return sendError(socket, { message: 'Server Error occured' });
     }
 }

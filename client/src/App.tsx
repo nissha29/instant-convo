@@ -1,30 +1,32 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import MyMessage from "./components/MyMessage";
 // import ReceivedMessage from "./components/ReceivedMessage";
-import { joinedStatus,messagesState, roomIdState } from "./store/atoms";
+import { generatedRoomCode, joinedStatus, messagesState, usernameState, usersCount } from "./store/atoms";
 import { Message, Copy, Exit, Send } from "./icons/icons";
 import JoinRoom from "./components/JoinRoom";
-import { FormDataProps } from "./types/FormDataProps";
 import { useRecoilValue } from "recoil";
+import toast from "react-hot-toast";
+import { copyRoomCode } from "./utils/CopyRoomCode";
 
 function App() {
   const isJoined = useRecoilValue(joinedStatus);
   const messages = useRecoilValue(messagesState);
-  // const username = useRecoilValue(usernameState);
-  const roomId = useRecoilValue(roomIdState);
+  const username = useRecoilValue(usernameState);
+  const roomCode = useRecoilValue(generatedRoomCode);
+  const socketCount = useRecoilValue(usersCount);
   const inputRef = useRef<HTMLInputElement>(null);
-  // const [formData, setFormData] = useState<FormDataProps>({
-  //   'type': '',
-  //   'payload': {}
-  // });
 
   function sendMessage() {
+  }
+
+  function leaveRoom() {
+
   }
 
 
   if (!isJoined) {
     return (
-      <JoinRoom /> 
+      <JoinRoom />
     )
   }
 
@@ -36,22 +38,43 @@ function App() {
           Instant Chat
         </div>
 
-        <div className="flex gap-5 justify-center items-center bg-gray-900/80 rounded-xl w-80 sm:w-96 px-3 mt-5 mx-10">
-          <div className="flex justify-between items-center w-full py-3">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm sm:text-lg font-semibold text-gray-300">Room Code:</span>
-                <span className="text-sm sm:text-lg font-medium text-white tracking-wider">{roomId}</span>
+        <div className="flex justify-between items-center bg-white/20 rounded-xl w-80 sm:w-96 px-4 py-3 mt-5 mx-10">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">Room:</span>
+              <span className="text-white font-mono tracking-wider text-sm">{roomCode}</span>
+              <button
+                onClick={async () => {
+                  const success = await copyRoomCode(roomCode);
+                  if (success) {
+                    toast.success("Room code copied!");
+                  } else {
+                    toast.error("Failed to copy room code");
+                  }
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Copy Room Code"
+              >
                 <Copy />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm sm:text-lg text-gray-300 font-semibold">Users:</span>
-                <span className="text-sm sm:text-lg font-medium text-white">{}</span>
-              </div>
+              </button>
             </div>
-            <button className="flex items-center gap-2 text-white px-3 py-2 rounded-lg transition-colors duration-300 ease-in-out hover:cursor-pointer hover:text-red-500">
+
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">Users:</span>
+              <span className="text-white text-sm">{socketCount}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 items-end">
+            <div className="text-white text-sm font-medium">
+              {username.toUpperCase()}
+            </div>
+            <button
+              className="flex items-center gap-1.5 text-gray-300 hover:text-red-400 transition-colors"
+              onClick={leaveRoom}
+            >
               <Exit />
-              <span className="text-sm sm:text-lg font-semibold">Exit</span>
+              <span className="text-xs">Exit</span>
             </button>
           </div>
         </div>

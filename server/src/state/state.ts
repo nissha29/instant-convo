@@ -61,3 +61,9 @@ export async function isRoomEmpty(roomId: string): Promise<boolean> {
 export async function removeSocket(socketId: string): Promise<void> {
     socketMap.delete(socketId);
 }
+
+export async function getUserCountInRoom(roomId: string): Promise<number> {
+    const sockets = await getRoomSockets(roomId);
+    return sockets.length;
+
+}

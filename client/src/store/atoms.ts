@@ -3,9 +3,14 @@ import { recoilPersist } from "recoil-persist";
 
 const { persistAtom } = recoilPersist();
 
-export const connectionStatus = atom({
-    key: 'connectionStatus',
-    default: false,
+export const generatedRoomCode = atom({
+    key: 'roomCode',
+    default: '',
+})
+
+export  const usersCount = atom({
+    key: 'usersCount',
+    default: 0,
 })
 
 export const joinedStatus = atom({
@@ -26,7 +31,7 @@ export const messagesState = atom<string[]>({
 
 export const usernameState = atom({
     key: 'username',
-    default: null,
+    default: '',
     effects_UNSTABLE: [persistAtom],
 })
 
