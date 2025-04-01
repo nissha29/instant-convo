@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
-import MyMessage from "./components/MyMessage";
-// import ReceivedMessage from "./components/ReceivedMessage";
-import { generatedRoomCode, joinedStatus, messagesState, usernameState, usersCount } from "./store/atoms";
-import { Message, Copy, Exit, Send } from "./icons/icons";
+import Message from "./components/Message";
+import { generatedRoomCode, joinedStatus, currentMessageDetails, usernameState, usersCount } from "./store/atoms";
+import { MessageIcon, Copy, Exit, Send } from "./icons/icons";
 import JoinRoom from "./components/JoinRoom";
 import { useRecoilValue } from "recoil";
 import toast from "react-hot-toast";
@@ -11,12 +10,12 @@ import { useWebSocket } from './utils/CreateConnection'
 
 function App() {
   const isJoined = useRecoilValue(joinedStatus);
-  const messages = useRecoilValue(messagesState);
+  const messagesDetails = useRecoilValue(currentMessageDetails);
   const username = useRecoilValue(usernameState);
   const roomCode = useRecoilValue(generatedRoomCode);
   const socketCount = useRecoilValue(usersCount);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { leaveRoom } = useWebSocket();
+  const { sendMessageToRoom, leaveRoom } = useWebSocket();
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -31,9 +30,6 @@ function App() {
     };
   }, []);
 
-  function sendMessageToRoom() {
-  }
-
 
   if (!isJoined) {
     return (
@@ -45,7 +41,7 @@ function App() {
     <>
       <div className='flex flex-col h-screen w-full bg-black text-white items-center'>
         <div className="flex gap-5 justify-center items-center font-bold text-3xl sm:text-4xl mt-5 font-mono tracking-wider">
-          <Message />
+          <MessageIcon />
           Instant Chat
         </div>
 
@@ -93,16 +89,22 @@ function App() {
         <div className="w-full flex justify-center items-center sm:px-14 px-4 pt-5">
           <div className="border border-gray-500 p-4 rounded-xl w-96 flex flex-col" style={{ height: 'calc(100vh - 18rem)' }}>
             <div className="flex flex-col gap-4 overflow-y-auto flex-grow scrollbar-none">
-              {/* <MyMessage />
-              <ReceivedMessage /> */}
-              {messages.map((message) => <MyMessage message={message} />)}
+              {messagesDetails.map((curr) => {
+                return <div>
+                  <Message username={curr.username} message={curr.message} time={curr.time} />
+                </div>
+              })}
             </div>
           </div>
         </div>
 
         <div className="w-full sm:px-14 px-4 flex justify-center items-center gap-4">
           <input ref={inputRef} className="border border-gray-500 p-3 rounded-xl h-14 w-80 my-5 bg-transparent  placeholder:text-gray-600" type="text" placeholder="Type Message" />
-          <button onClick={sendMessageToRoom} className="bg-white rounded-full p-1 hover:cursor-pointer" title="Send Message">
+          <button onClick={() => {
+            if (inputRef.current) {
+              sendMessageToRoom(inputRef.current.value);
+            }
+          }} className="bg-white rounded-full p-1 hover:cursor-pointer" title="Send Message">
             <Send />
           </button>
         </div>

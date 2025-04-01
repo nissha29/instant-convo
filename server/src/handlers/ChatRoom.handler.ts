@@ -35,7 +35,8 @@ export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayloa
         socketsInCurrentRoom?.forEach((socketId) => {
             const clientSocket = socketMap.get(socketId);
             if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-                sendContent(clientSocket, 'chat', { username, message });
+                const time = new Date().toLocaleTimeString();
+                sendContent(clientSocket, 'chat', { username, message, time });
             }
         });
     } catch (error) {

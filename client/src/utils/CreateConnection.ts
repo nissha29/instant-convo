@@ -1,17 +1,17 @@
 import { useRef } from "react";
 import toast from "react-hot-toast";
-import { useSetRecoilState } from "recoil";
-import { generatedRoomCode, joinedStatus, messagesState, usernameState, usersCount } from "../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { currentMessageDetails, generatedRoomCode, joinedStatus, usernameState, usersCount } from "../store/atoms";
 
 let websocketInstance: WebSocket | null = null;
 
 export function useWebSocket() {
   const wsRef = useRef(websocketInstance);
   const setRoomCode = useSetRecoilState(generatedRoomCode);
-  const setUsername = useSetRecoilState(usernameState);
+  const [username,setUsername] = useRecoilState(usernameState);
   const setIsJoined = useSetRecoilState(joinedStatus);
   const setSocketCount = useSetRecoilState(usersCount);
-  const setMessages = useSetRecoilState(messagesState);
+  const setMessageDetails = useSetRecoilState(currentMessageDetails);
 
   function connect() {
     if (websocketInstance && websocketInstance.readyState !== WebSocket.CLOSED) {
@@ -56,7 +56,7 @@ export function useWebSocket() {
         }
       }
       if(type === 'chat'){
-    
+        setMessageDetails((prev) => [...prev, data.payload]);
       }
       if(type === 'error'){
         toast.error(data.payload.message);
@@ -84,17 +84,22 @@ export function useWebSocket() {
       sendMessage('leave_room', {});
       websocketInstance.close();
       websocketInstance = null; 
-    } else {
-      console.log("Socket not open; skipping sendMessage");
-    }
-    
-    setMessages([]);
+    }  
+    setMessageDetails([]);
     setIsJoined(false);
+  }
+
+  function sendMessageToRoom(message: string){
+    if(websocketInstance && websocketInstance.readyState === WebSocket.OPEN){
+      sendMessage('chat', { username: username, message: message})
+    }
   }
 
   return {
     connect,
     sendMessage,
+    sendMessageToRoom,
     leaveRoom,
+    websocketInstance,
   };
 }
