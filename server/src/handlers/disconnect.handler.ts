@@ -34,8 +34,6 @@ export async function Disconnect(socket: WebSocket) {
     await removeSocketUser(socketId);
     await removeSocketRoom(socketId);
     removeSocket(socketId);
-
-    return sendContent(socket, 'room_left', { message: 'You are disconnected'});
   } catch (error) {
     console.error('Redis error:', error);
     return sendError(socket, { message: 'Server Error occured' });

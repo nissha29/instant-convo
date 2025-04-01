@@ -12,13 +12,14 @@ interface Message {
     payload: any,
 }
 
-type MessageType = 'join_room' | 'chat' | 'create_room';
+type MessageType = 'join_room' | 'chat' | 'create_room' | 'leave_room';
 
 
 const messageHandlers: Record<MessageType, (socket: WebSocket, payload: any) => void> = {
     'join_room': JoinRoomHandler,
     'chat': ChatRoomHandler,
     'create_room': CreateRoom,
+    'leave_room': Disconnect,
 };
 
 
@@ -41,10 +42,5 @@ wss.on('connection', (socket) => {
       } catch (error) {
         console.error('Error processing message:', error);
       }
-    });
-    
-    socket.on('close', () => {
-      Disconnect(socket);
-      console.log('User disconnected');
     });
   });

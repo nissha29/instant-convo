@@ -1,39 +1,45 @@
 import { useRef } from "react";
 import toast from "react-hot-toast";
 import { useSetRecoilState } from "recoil";
-import { generatedRoomCode, joinedStatus, usernameState, usersCount } from "../store/atoms";
+import { generatedRoomCode, joinedStatus, messagesState, usernameState, usersCount } from "../store/atoms";
+
+let websocketInstance: WebSocket | null = null;
 
 export function useWebSocket() {
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef(websocketInstance);
   const setRoomCode = useSetRecoilState(generatedRoomCode);
   const setUsername = useSetRecoilState(usernameState);
   const setIsJoined = useSetRecoilState(joinedStatus);
   const setSocketCount = useSetRecoilState(usersCount);
+  const setMessages = useSetRecoilState(messagesState);
 
   function connect() {
-    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
-      return wsRef.current;
+    if (websocketInstance && websocketInstance.readyState !== WebSocket.CLOSED) {
+      wsRef.current = websocketInstance;
+      return websocketInstance;
     }
-    const ws = new WebSocket(`ws://localhost:8080`);
 
+    const ws = new WebSocket(`ws://localhost:8080`);
+    
     ws.onopen = () => {
       console.log("WebSocket connected");
     };
-
+    
     ws.onclose = (event) => {
       console.log("WebSocket disconnected", event.code, event.reason);
+      websocketInstance = null;
     };
-
+    
     ws.onerror = (error) => {
       console.error(`WebSocket error:`, error);
       toast.error('Error');
     };
-
+    
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       const type = data.type;
       console.log(data);
-
+      
       if(type === 'room_created'){
         toast.success(`Room created successfully`);
       }
@@ -45,26 +51,27 @@ export function useWebSocket() {
       }
       if(type === 'roomUserCount'){
         setSocketCount(data.payload.count);
-      }
-      if(type === 'room_left'){
-        toast.success('You are disconnected');
+        if(data.payload?.message){
+          toast.success(data.payload.message);
+        }
       }
       if(type === 'chat'){
-        
+    
       }
       if(type === 'error'){
         toast.error(data.payload.message);
       }
     };
-
+    
     wsRef.current = ws;
-    return wsRef.current;
+    websocketInstance = ws;
+    return ws;
   }
 
   function sendMessage(type: string, payload: any) {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (websocketInstance && websocketInstance.readyState === WebSocket.OPEN) {
       const message = JSON.stringify({ type, payload });
-      wsRef.current.send(message);
+      websocketInstance.send(message);
       console.log("Sent message:", message);
       return true;
     }
@@ -72,9 +79,22 @@ export function useWebSocket() {
     return false;
   }
 
+  function leaveRoom() {
+    if (websocketInstance && websocketInstance.readyState === WebSocket.OPEN) {
+      sendMessage('leave_room', {});
+      websocketInstance.close();
+      websocketInstance = null; 
+    } else {
+      console.log("Socket not open; skipping sendMessage");
+    }
+    
+    setMessages([]);
+    setIsJoined(false);
+  }
+
   return {
     connect,
     sendMessage,
-    socket: wsRef
+    leaveRoom,
   };
 }
