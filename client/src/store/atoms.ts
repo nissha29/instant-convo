@@ -1,8 +1,5 @@
 import { atom } from "recoil";
 import { MessageProps } from "../types/MessageProps";
-import { recoilPersist } from "recoil-persist";
-
-const { persistAtom } = recoilPersist();
 
 export const generatedRoomCode = atom({
     key: 'roomCode',
@@ -27,7 +24,11 @@ export const roomCreationStatus = atom({
 export const usernameState = atom({
     key: 'username',
     default: '',
-    effects_UNSTABLE: [persistAtom],
+})
+
+export const uniqueId = atom({
+    key: 'uniqueId',
+    default: '',
 })
 
 export const roomIdState = atom({

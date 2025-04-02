@@ -1,16 +1,16 @@
 import { copyRoomCode } from "../utils/CopyRoomCode";
-import { generateRoomCode } from "../utils/generateRoomCode";
+import { generateCode } from "../utils/generateCode";
 import { Refresh, Copy, Loader } from "../icons/icons";
 import { useRef } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { joinedStatus, roomCreationStatus, roomIdState } from "../store/atoms";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { joinedStatus, roomCreationStatus, roomIdState, uniqueId } from "../store/atoms";
 import { useWebSocket } from "../utils/CreateConnection";
 import toast from "react-hot-toast";
-// import { FormDataProps } from "../types/FormDataProps";
 
 export default function JoinRoom() {
     const [roomId, setRoomId] = useRecoilState(roomIdState);
     const isJoined = useRecoilValue(joinedStatus);
+    const setUniqueId = useSetRecoilState(uniqueId);
     const [isRoomCreated, setIsRoomCreated] = useRecoilState(roomCreationStatus);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
@@ -21,7 +21,7 @@ export default function JoinRoom() {
 
         let ws = connect();
 
-        const roomCode = generateRoomCode();
+        const roomCode = generateCode(7);
         setRoomId(roomCode);
         const type = 'create_room';
         const payload = {
@@ -51,9 +51,12 @@ export default function JoinRoom() {
             toast.error("Room Code is required");
             return;
         }
+        const id = generateCode(7);
+        setUniqueId(id);
 
         const type = 'join_room';
         const payload = {
+            id: id,
             username: enteredUsername,
             roomId: enteredRoomCode,
         }

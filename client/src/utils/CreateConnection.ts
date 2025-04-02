@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import toast from "react-hot-toast";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { currentMessageDetails, generatedRoomCode, joinedStatus, usernameState, usersCount } from "../store/atoms";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { currentMessageDetails, generatedRoomCode, joinedStatus, uniqueId, usernameState, usersCount } from "../store/atoms";
 
 let websocketInstance: WebSocket | null = null;
 
@@ -12,6 +12,7 @@ export function useWebSocket() {
   const setIsJoined = useSetRecoilState(joinedStatus);
   const setSocketCount = useSetRecoilState(usersCount);
   const setMessageDetails = useSetRecoilState(currentMessageDetails);
+  const id = useRecoilValue(uniqueId);
 
   function connect() {
     if (websocketInstance && websocketInstance.readyState !== WebSocket.CLOSED) {
@@ -91,7 +92,7 @@ export function useWebSocket() {
 
   function sendMessageToRoom(message: string){
     if(websocketInstance && websocketInstance.readyState === WebSocket.OPEN){
-      sendMessage('chat', { username: username, message: message})
+      sendMessage('chat', { id: id, username: username, message: message})
     }
   }
 

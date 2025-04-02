@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { KeyboardEvent, useEffect, useRef } from "react";
 import Message from "./components/Message";
 import { generatedRoomCode, joinedStatus, currentMessageDetails, usernameState, usersCount } from "./store/atoms";
 import { MessageIcon, Copy, Exit, Send } from "./icons/icons";
@@ -15,6 +15,7 @@ function App() {
   const roomCode = useRecoilValue(generatedRoomCode);
   const socketCount = useRecoilValue(usersCount);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { sendMessageToRoom, leaveRoom } = useWebSocket();
 
   useEffect(() => {
@@ -30,6 +31,26 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      const { scrollHeight } = messagesEndRef.current;
+      messagesEndRef.current.scrollTop = scrollHeight;
+    }
+  }, [messagesDetails]);
+
+  function SendYourMessage() {
+    if (inputRef.current) {
+      sendMessageToRoom(inputRef.current.value);
+      inputRef.current.value = '';
+    }
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      SendYourMessage();
+    }
+  }
 
   if (!isJoined) {
     return (
@@ -88,10 +109,10 @@ function App() {
 
         <div className="w-full flex justify-center items-center sm:px-14 px-4 pt-5">
           <div className="border border-gray-500 p-4 rounded-xl w-96 flex flex-col" style={{ height: 'calc(100vh - 18rem)' }}>
-            <div className="flex flex-col gap-4 overflow-y-auto flex-grow scrollbar-none">
+            <div ref={messagesEndRef} className="overflow-y-auto flex-grow scrollbar-none">
               {messagesDetails.map((curr) => {
-                return <div>
-                  <Message username={curr.username} message={curr.message} time={curr.time} />
+                return <div key={curr.id}>
+                  <Message id={curr.id} username={curr.username} message={curr.message} time={curr.time} />
                 </div>
               })}
             </div>
@@ -99,12 +120,8 @@ function App() {
         </div>
 
         <div className="w-full sm:px-14 px-4 flex justify-center items-center gap-4">
-          <input ref={inputRef} className="border border-gray-500 p-3 rounded-xl h-14 w-80 my-5 bg-transparent  placeholder:text-gray-600" type="text" placeholder="Type Message" />
-          <button onClick={() => {
-            if (inputRef.current) {
-              sendMessageToRoom(inputRef.current.value);
-            }
-          }} className="bg-white rounded-full p-1 hover:cursor-pointer" title="Send Message">
+          <input onKeyDown={handleKeyDown} ref={inputRef} className="border border-gray-500 p-3 rounded-xl h-14 w-80 my-5 bg-transparent  placeholder:text-gray-600" type="text" placeholder="Type Message" />
+          <button onClick={SendYourMessage} className="bg-white rounded-full p-1 hover:cursor-pointer" title="Send Message">
             <Send />
           </button>
         </div>

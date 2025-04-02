@@ -4,12 +4,13 @@ import { sendContent, sendError } from "../utils/SendResponse";
 import findSocketId from "../utils/findSocketId";
 
 interface ChatRoomPayload {
+    id: string,
     username: string,
     message: string,
 }
 
 export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayload) {
-    const { message } = payload;
+    const { id, message } = payload;
 
     try {
         const socketId = findSocketId(socket);
@@ -35,8 +36,11 @@ export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayloa
         socketsInCurrentRoom?.forEach((socketId) => {
             const clientSocket = socketMap.get(socketId);
             if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-                const time = new Date().toLocaleTimeString();
-                sendContent(clientSocket, 'chat', { username, message, time });
+                const date = new Date();
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const time = `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+                sendContent(clientSocket, 'chat', { id, username, message, time });
             }
         });
     } catch (error) {

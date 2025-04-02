@@ -4,12 +4,13 @@ import { sendContent, sendError } from "../utils/SendResponse";
 import { v4 as uuidv4 } from 'uuid';
 
 interface JoinRoomPayload {
+    id: string,
     username: string,
     roomId: string,
 }
 
 export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayload) {
-    const { username, roomId } = payload;
+    const { id, username, roomId } = payload;
 
     if(!username){
         return sendError(socket, { message: `Username can't be empty` });
@@ -51,7 +52,7 @@ export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayloa
             }
         })
 
-        return sendContent(socket, 'room_joined', { username: username, roomId: roomId });
+        return sendContent(socket, 'room_joined', { id: id, username: username, roomId: roomId });
     } catch (error) {
         console.error('Redis error:', error);
         return sendError(socket, { message: 'Server Error occured' });
