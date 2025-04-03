@@ -1,12 +1,13 @@
 import { useRef } from "react";
 import toast from "react-hot-toast";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { currentMessageDetails, generatedRoomCode, joinedStatus, uniqueId, usernameState, usersCount } from "../store/atoms";
+import { currentMessageDetails, generatedRoomCode, joinedStatus, roomIdState, uniqueId, usernameState, usersCount } from "../store/atoms";
 
 let websocketInstance: WebSocket | null = null;
 
 export function useWebSocket() {
   const wsRef = useRef(websocketInstance);
+  const setRoomId = useSetRecoilState(roomIdState);
   const setRoomCode = useSetRecoilState(generatedRoomCode);
   const [username,setUsername] = useRecoilState(usernameState);
   const setIsJoined = useSetRecoilState(joinedStatus);
@@ -22,29 +23,23 @@ export function useWebSocket() {
 
     const ws = new WebSocket(`ws://localhost:8080`);
     
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
-    
-    ws.onclose = (event) => {
-      console.log("WebSocket disconnected", event.code, event.reason);
+    ws.onclose = () => {
       websocketInstance = null;
     };
     
-    ws.onerror = (error) => {
-      console.error(`WebSocket error:`, error);
+    ws.onerror = () => {
       toast.error('Error');
     };
     
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       const type = data.type;
-      console.log(data);
       
       if(type === 'room_created'){
         toast.success(`Room created successfully`);
       }
       if(type === 'room_joined'){
+        setRoomId('');
         setUsername(data.payload.username);
         setRoomCode(data.payload.roomId);
         setIsJoined(true);
@@ -73,10 +68,8 @@ export function useWebSocket() {
     if (websocketInstance && websocketInstance.readyState === WebSocket.OPEN) {
       const message = JSON.stringify({ type, payload });
       websocketInstance.send(message);
-      console.log("Sent message:", message);
       return true;
     }
-    console.log("Failed to send message - connection not open");
     return false;
   }
 
@@ -101,6 +94,5 @@ export function useWebSocket() {
     sendMessage,
     sendMessageToRoom,
     leaveRoom,
-    websocketInstance,
   };
 }

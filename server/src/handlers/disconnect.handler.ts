@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { sendContent, sendError } from "../utils/SendResponse";
 import findSocketId from "../utils/findSocketId";
-import { deleteRoom, getRoomSockets, getSocketRoom, getUserCountInRoom, isRoomEmpty, removeSocket, removeSocketFromRoom, removeSocketRoom, removeSocketUser, socketMap } from "../state/state";
+import { deleteRoom, getRoomSockets, getSocketRoom, getSocketUser, getUserCountInRoom, isRoomEmpty, removeSocket, removeSocketFromRoom, removeSocketRoom, removeSocketUser, socketMap } from "../state/state";
 
 export async function Disconnect(socket: WebSocket) {
   try {
@@ -11,11 +11,17 @@ export async function Disconnect(socket: WebSocket) {
       return sendError(socket, { message: 'Socket Not Found' });
     }
 
+    const username = await getSocketUser(socketId);
+
+    if (!username) {
+      return sendError(socket, { message: 'User Not Found' });
+    }
+
     const roomId = await getSocketRoom(socketId);
 
     if (roomId) {
       await removeSocketFromRoom(roomId, socketId);
-      
+
       if (await isRoomEmpty(roomId)) {
         await deleteRoom(roomId);
       }
@@ -25,8 +31,8 @@ export async function Disconnect(socket: WebSocket) {
 
       socketsInRoom.forEach((socketId) => {
         const clientSocket = socketMap.get(socketId);
-        if(clientSocket && clientSocket.readyState === WebSocket.OPEN){
-          sendContent(clientSocket, 'roomUserCount', { count: socketsCount });
+        if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
+          sendContent(clientSocket, 'roomUserCount', { count: socketsCount, message:  `${username} left the room`, username});
         }
       })
     }

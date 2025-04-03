@@ -48,7 +48,7 @@ export async function JoinRoomHandler(socket: WebSocket, payload: JoinRoomPayloa
         socketsInRoom.forEach((socketId) => {
             const clientSocket = socketMap.get(socketId);
             if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-              sendContent(clientSocket, 'roomUserCount', { count: socketsCount, message: `${username} entered into room` });
+              sendContent(clientSocket, 'roomUserCount', { count: socketsCount, message: `${username} entered into room`, username });
             }
         })
 

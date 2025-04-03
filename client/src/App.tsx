@@ -1,12 +1,13 @@
-import { KeyboardEvent, useEffect, useRef } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import Message from "./components/Message";
 import { generatedRoomCode, joinedStatus, currentMessageDetails, usernameState, usersCount } from "./store/atoms";
-import { MessageIcon, Copy, Exit, Send } from "./icons/icons";
+import { MessageIcon, Copy, Exit, Send, Smile } from "./icons/icons";
 import JoinRoom from "./components/JoinRoom";
 import { useRecoilValue } from "recoil";
 import toast from "react-hot-toast";
 import { copyRoomCode } from "./utils/CopyRoomCode";
-import { useWebSocket } from './utils/CreateConnection'
+import { useWebSocket } from './utils/CreateConnection';
+import EmojiPicker from 'emoji-picker-react';
 
 function App() {
   const isJoined = useRecoilValue(joinedStatus);
@@ -17,6 +18,7 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { sendMessageToRoom, leaveRoom } = useWebSocket();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -38,10 +40,25 @@ function App() {
     }
   }, [messagesDetails]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showEmojiPicker && !target.closest('.emoji-picker-container')) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   function SendYourMessage() {
-    if (inputRef.current) {
+    if (inputRef.current && inputRef.current.value.trim() !== '') {
       sendMessageToRoom(inputRef.current.value);
       inputRef.current.value = '';
+      setShowEmojiPicker(false);
     }
   }
 
@@ -52,11 +69,25 @@ function App() {
     }
   }
 
+  const onEmojiClick = (emojiData: any) => {
+    if (inputRef.current) {
+      const emoji = emojiData.emoji;
+      const start = inputRef.current.selectionStart || 0;
+      const end = inputRef.current.selectionEnd || 0;
+      const text = inputRef.current.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+
+      inputRef.current.value = before + emoji + after;
+    }
+  };
+
   if (!isJoined) {
     return (
       <JoinRoom />
     )
   }
+
 
   return (
     <>
@@ -110,8 +141,8 @@ function App() {
         <div className="w-full flex justify-center items-center sm:px-14 px-4 pt-5">
           <div className="border border-gray-500 p-4 rounded-xl w-96 flex flex-col" style={{ height: 'calc(100vh - 18rem)' }}>
             <div ref={messagesEndRef} className="overflow-y-auto flex-grow scrollbar-none">
-              {messagesDetails.map((curr) => {
-                return <div key={curr.id}>
+              {messagesDetails.map((curr, index) => {
+                return <div key={`${curr.id}-${index}`}>
                   <Message id={curr.id} username={curr.username} message={curr.message} time={curr.time} />
                 </div>
               })}
@@ -119,9 +150,35 @@ function App() {
           </div>
         </div>
 
-        <div className="w-full sm:px-14 px-4 flex justify-center items-center gap-4">
-          <input onKeyDown={handleKeyDown} ref={inputRef} className="border border-gray-500 p-3 rounded-xl h-14 w-80 my-5 bg-transparent  placeholder:text-gray-600" type="text" placeholder="Type Message" />
-          <button onClick={SendYourMessage} className="bg-white rounded-full p-1 hover:cursor-pointer" title="Send Message">
+        <div className="w-full sm:px-14 px-4 flex justify-center items-center gap-4 relative">
+          <div className="flex w-80 relative">
+            <input
+              onKeyDown={handleKeyDown}
+              ref={inputRef}
+              className="border border-gray-500 py-3 pl-3 pr-12 rounded-xl h-14 w-full my-5 bg-transparent placeholder:text-gray-600"
+              type="text"
+              placeholder="Type Message"
+            />
+            <button
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xl hover:text-gray-300 transition-colors"
+              title="Emoji"
+            >
+              <Smile />
+            </button>
+
+            {showEmojiPicker && (
+              <div className="absolute bottom-16 right-0 z-10 emoji-picker-container">
+                <EmojiPicker onEmojiClick={onEmojiClick} />
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={SendYourMessage}
+            className="bg-white rounded-full p-1 hover:cursor-pointer"
+            title="Send Message"
+          >
             <Send />
           </button>
         </div>
