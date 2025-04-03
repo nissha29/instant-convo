@@ -74,8 +74,8 @@ export default function JoinRoom() {
 
     return (
         <div className='flex flex-col h-screen w-full bg-black text-white items-center justify-center font-mono px-4'>
-            <div className="border border-gray-700 rounded-lg py-8 shadow-2xl w-full max-w-md px-6 tracking-wider">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Join Instant Chat</h2>
+            <div className="border border-gray-700 rounded-lg py-6 shadow-2xl w-full max-w-md px-6 tracking-wider">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Join Instant Convo</h2>
 
                 <button
                     onClick={createNewRoom}

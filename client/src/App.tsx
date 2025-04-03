@@ -92,9 +92,9 @@ function App() {
   return (
     <>
       <div className='flex flex-col h-screen w-full bg-black text-white items-center'>
-        <div className="flex gap-5 justify-center items-center font-bold text-3xl sm:text-4xl mt-5 font-mono tracking-wider">
+        <div className="flex gap-3 justify-center items-center font-bold text-3xl sm:text-4xl mt-5 font-mono tracking-wider px-1">
           <MessageIcon />
-          Instant Chat
+          Instant Convo
         </div>
 
         <div className="flex justify-between items-center bg-white/20 rounded-xl w-80 sm:w-96 px-4 py-3 mt-5 mx-10">
