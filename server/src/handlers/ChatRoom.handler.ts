@@ -36,10 +36,12 @@ export async function ChatRoomHandler(socket: WebSocket, payload: ChatRoomPayloa
         socketsInCurrentRoom?.forEach((socketId) => {
             const clientSocket = socketMap.get(socketId);
             if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-                const date = new Date();
-                const hours = date.getHours();
-                const minutes = date.getMinutes();
-                const time = `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+                const time = new Intl.DateTimeFormat('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(new Date());
                 sendContent(clientSocket, 'chat', { id, username, message, time });
             }
         });
