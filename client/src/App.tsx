@@ -168,8 +168,8 @@ function App() {
             </button>
 
             {showEmojiPicker && (
-              <div className="absolute bottom-16 right-0 z-10 emoji-picker-container">
-                <EmojiPicker onEmojiClick={onEmojiClick} />
+              <div className="absolute bottom-20 -right-16 z-10 emoji-picker-container">
+                <EmojiPicker onEmojiClick={onEmojiClick} width={290} height={350}/>
               </div>
             )}
           </div>
