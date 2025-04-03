@@ -26,7 +26,7 @@ A lightweight, real-time chat application that allows users to create temporary 
 #### Backend
 
 1. Node.js
-2. Express
+2. Typescript
 3. ws (WebSocket library)
 4. Redis (for message handling and room management)
 5. Render (hosting)
