@@ -47,7 +47,4 @@ A lightweight, real-time chat application that allows users to create temporary 
 - Push to the branch (```git push origin feature/amazing-feature```)
 - Open a Pull Request
 
-## 📬 Contact
-Nissha - @nissha29
-Project Link: https://github.com/nissha29/instant-convo
 
