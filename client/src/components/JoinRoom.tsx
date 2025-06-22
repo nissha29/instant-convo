@@ -136,7 +136,7 @@ export default function JoinRoom() {
                         />
                         <button
                             onClick={() => joinRoom()}
-                            className="w-full sm:w-auto bg-white/90 text-black text-base sm:text-lg px-4 sm:px-7 py-3 rounded-xl hover:bg-white transition-colors font-medium whitespace-nowrap"
+                            className="w-full sm:w-auto bg-white/90 text-black text-base sm:text-lg px-4 sm:px-7 py-3 rounded-xl hover:bg-white transition-colors font-medium whitespace-nowrap flex justify-center items-center"
                         >
                             {isLoading
                                 ?
