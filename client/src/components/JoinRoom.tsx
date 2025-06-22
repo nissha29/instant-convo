@@ -1,17 +1,17 @@
 import { copyRoomCode } from "../utils/CopyRoomCode";
 import { generateCode } from "../utils/generateCode";
 import { Refresh, Copy, Loader } from "../icons/icons";
-import { useRef } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { joinedStatus, roomCreationStatus, roomIdState, uniqueId } from "../store/atoms";
+import { useRef, useState } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { roomCreationStatus, roomIdState, uniqueId } from "../store/atoms";
 import { useWebSocket } from "../utils/CreateConnection";
 import toast from "react-hot-toast";
 
 export default function JoinRoom() {
     const [roomId, setRoomId] = useRecoilState(roomIdState);
-    const isJoined = useRecoilValue(joinedStatus);
     const setUniqueId = useSetRecoilState(uniqueId);
     const [isRoomCreated, setIsRoomCreated] = useRecoilState(roomCreationStatus);
+    const [isLoading, setIsLoading] = useState(false);
     const usernameRef = useRef<HTMLInputElement>(null);
     const roomIdRef = useRef<HTMLInputElement>(null);
     const { connect, sendMessage } = useWebSocket();
@@ -39,6 +39,7 @@ export default function JoinRoom() {
     }
 
     function joinRoom() {
+        setIsLoading(true);
         const enteredUsername = usernameRef.current?.value;
         const enteredRoomCode = roomIdRef.current?.value
 
@@ -137,7 +138,7 @@ export default function JoinRoom() {
                             onClick={() => joinRoom()}
                             className="w-full sm:w-auto bg-white/90 text-black text-base sm:text-lg px-4 sm:px-7 py-3 rounded-xl hover:bg-white transition-colors font-medium whitespace-nowrap"
                         >
-                            {isJoined
+                            {isLoading
                                 ?
                                 <div className="animate-spin">
                                     <Loader />
