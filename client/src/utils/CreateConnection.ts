@@ -21,7 +21,7 @@ export function useWebSocket() {
       return websocketInstance;
     }
 
-    const ws = new WebSocket(`http://localhost:8080`);
+    const ws = new WebSocket(`https://instant-chat-vx8z.onrender.com`);
     
     ws.onclose = () => {
       websocketInstance = null;
